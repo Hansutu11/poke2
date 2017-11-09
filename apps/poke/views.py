@@ -1,52 +1,32 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, HttpResponseRedirect, reverse
+from .models import User, Friend
 from django.contrib import messages
-from .models import Friend, User
 
-def check_logged_in(request):
-    #make sure user is logged in
-    if not "id" in request.session.keys():
-        print "no user here"
-        return redirect('/')
-
-# Create your views here.
 def index(request):
-
     return render(request, "poke/index.html")
 
-def login_view(request):
-    return render(request, 'poke/login.html')
-
-def register_view(request):
-    return render(request, 'poke/register.html')
-
-def login(request):
-    result = Friend.objects.validate_login(request.POST)
-    if type(result) == list:
-        for err in result:
-            messages.error(request, err)
-        return redirect('/login_view')
-    request.session['id'] = result.id
-    return render(request, 'poke/dashboard.html')
-
 def register(request):
-    result = Friend.objects.validate_registration(request.POST)
+    result = User.objects.validate_registration(request.POST)
     print result, type(result)
     if type(result) == list:
         for err in result:
             messages.error(request, err)
-        return redirect('/register_view')
-    request.session['id'] = result.id
-    return redirect('/register_view')
+        return redirect('/')
+    request.session['user_id'] = result.id
+    return redirect('/dashboard')
+
+def login(request):
+    result = User.objects.validate_login(request.POST)
+    if type(result) == list:
+        for err in result:
+            messages.error(request, err)
+        return redirect('/')
+    request.session['user_id'] = result.id
+    return redirect('/dashboard')
 
 def logout(request):
-    del request.session['id']
+    request.session.clear()
     return redirect('/')
-
-# REQUIRES LOGIN
-
 
 def increment(request, user_id):
     poking2 = User.objects.get(id=request.session['user_id'])
